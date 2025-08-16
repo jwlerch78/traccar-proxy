@@ -1,39 +1,50 @@
-import express from 'express';
-import fetch from 'node-fetch';
+// server.js
+const express = require("express");
+const fetch = require("node-fetch");
 const app = express();
-const PORT = process.env.PORT || 10000;
 
-const TRACCAR_URL = "https://traccar-render-k1th.onrender.com/";
-const TRACCAR_EMAIL = process.env.TRACCAR_EMAIL;
-const TRACCAR_PASSWORD = process.env.TRACCAR_PASSWORD;
+// ===== CONFIG =====
+const TRACCAR_URL = process.env.TRACCAR_URL || "https://traccar-render-k1th.onrender.com/api/positions/"; 
+const TRACCAR_USERNAME = process.env.TRACCAR_USERNAME || "jwlerch@gmail.com";
+const TRACCAR_PASSWORD = process.env.TRACCAR_PASSWORD || "Rileydog80!";
+const PORT = process.env.PORT || 3000;
 
+// ===== CORS =====
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Origin", "*"); // allow your dashboard to call
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
 
-app.get('/positions/:deviceId', async (req, res) => {
+// ===== Proxy endpoint =====
+app.get("/positions/:deviceId", async (req, res) => {
   const deviceId = req.params.deviceId;
 
   try {
-    const response = await fetch(`${TRACCAR_URL}?deviceId=${deviceId}`, {
+    // Basic Auth header
+    const auth = Buffer.from(`${TRACCAR_USERNAME}:${TRACCAR_PASSWORD}`).toString("base64");
+
+    // Fetch from private Traccar server
+    const response = await fetch(`${TRACCAR_URL}${deviceId}`, {
       headers: {
-        "Authorization": "Basic " + Buffer.from(`${TRACCAR_EMAIL}:${TRACCAR_PASSWORD}`).toString('base64')
+        "Authorization": `Basic ${auth}`
       }
     });
 
-    const text = await response.text(); // read raw text first
-    try {
-      const data = JSON.parse(text); // try to parse JSON
-      res.json(data);
-    } catch (err) {
-      console.error("Traccar returned non-JSON response:", text);
-      res.status(500).json({ error: "Traccar error", message: text });
+    if (!response.ok) {
+      return res.status(response.status).json({ error: `Traccar returned status ${response.status}` });
     }
+
+    const data = await response.json();
+    res.json(data);
+
   } catch (err) {
-    console.error("Proxy fetch failed:", err);
-    res.status(500).json({ error: "Failed to fetch positions", details: err.message });
+    console.error("Error fetching from Traccar:", err);
+    res.status(500).json({ error: "Error fetching device location" });
   }
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// ===== Start server =====
+app.listen(PORT, () => {
+  console.log(`Proxy server running on port ${PORT}`);
+});
