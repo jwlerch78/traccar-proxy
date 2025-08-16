@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-const TRACCAR_URL = "https://demo.traccar.org/api/positions";
+const TRACCAR_URL = "https://traccar-render-k1th.onrender.com/";
 const TRACCAR_EMAIL = process.env.TRACCAR_EMAIL;
 const TRACCAR_PASSWORD = process.env.TRACCAR_PASSWORD;
 
