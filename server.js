@@ -5,17 +5,22 @@ import fetch from "node-fetch";
 const app = express();
 
 // ===== CONFIG =====
-const TRACCAR_URL = process.env.TRACCAR_URL || "https://traccar-render-k1th.onrender.com/api/positions/"; 
-const TRACCAR_USERNAME = process.env.TRACCAR_USERNAME || "jwlerch@gmail.com";
-const TRACCAR_PASSWORD = process.env.TRACCAR_PASSWORD || "Rileydog80!";
+const TRACCAR_URL = process.env.TRACCAR_URL || "https://traccar-render-k1th.onrender.com/api/positions/";
+const TRACCAR_USERNAME = process.env.TRACCAR_USERNAME || "your-admin-email";
+const TRACCAR_PASSWORD = process.env.TRACCAR_PASSWORD || "your-admin-password";
 const PORT = process.env.PORT || 3000;
-
 
 // ===== CORS =====
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET,OPTIONS");
   next();
+});
+
+// ===== Handle OPTIONS preflight =====
+app.options("/positions/:deviceId", (req, res) => {
+  res.sendStatus(200);
 });
 
 // ===== Proxy endpoint =====
