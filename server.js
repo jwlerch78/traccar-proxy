@@ -6,8 +6,8 @@ const app = express();
 
 // ===== CONFIG =====
 const TRACCAR_URL = process.env.TRACCAR_URL || "https://traccar-render-k1th.onrender.com/api/positions/";
-const TRACCAR_USERNAME = process.env.TRACCAR_USERNAME || "your-admin-email";
-const TRACCAR_PASSWORD = process.env.TRACCAR_PASSWORD || "your-admin-password";
+const TRACCAR_USERNAME = process.env.TRACCAR_USERNAME || "jwlerch@gmail.com";
+const TRACCAR_PASSWORD = process.env.TRACCAR_PASSWORD || "Rileydog80!";
 const PORT = process.env.PORT || 3000;
 
 // ===== CORS =====
