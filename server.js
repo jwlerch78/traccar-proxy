@@ -24,11 +24,10 @@ app.use((req, res, next) => {
 });
 
 // ===== Handle OPTIONS preflight =====
-app.options("/positions/:deviceId", (req, res) => {
-  res.sendStatus(200);
-});
+app.options("/positions/:deviceId", (req, res) => res.sendStatus(200));
+app.options("/reverse", (req, res) => res.sendStatus(200));
 
-// ===== Proxy endpoint =====
+// ===== Proxy endpoint for Traccar positions =====
 app.get("/positions/:deviceId", async (req, res) => {
   const deviceId = req.params.deviceId;
 
@@ -38,9 +37,7 @@ app.get("/positions/:deviceId", async (req, res) => {
     );
 
     const response = await fetch(`${TRACCAR_URL}${deviceId}`, {
-      headers: {
-        Authorization: `Basic ${auth}`,
-      },
+      headers: { Authorization: `Basic ${auth}` },
     });
 
     if (!response.ok) {
@@ -54,6 +51,32 @@ app.get("/positions/:deviceId", async (req, res) => {
   } catch (err) {
     console.error("Error fetching from Traccar:", err);
     res.status(500).json({ error: "Error fetching device location" });
+  }
+});
+
+// ===== New reverse geocoding endpoint =====
+app.get("/reverse", async (req, res) => {
+  const { lat, lon } = req.query;
+  if (!lat || !lon) {
+    return res.status(400).json({ error: "Missing lat or lon query parameter" });
+  }
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+    );
+
+    if (!response.ok) {
+      return res
+        .status(response.status)
+        .json({ error: `Nominatim returned status ${response.status}` });
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error("Error reverse geocoding:", err);
+    res.status(500).json({ error: "Error reverse geocoding coordinates" });
   }
 });
 
