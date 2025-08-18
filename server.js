@@ -54,7 +54,7 @@ app.get("/positions/:deviceId", async (req, res) => {
   }
 });
 
-// ===== New reverse geocoding endpoint =====
+// ===== Reverse geocoding endpoint (fixed User-Agent) =====
 app.get("/reverse", async (req, res) => {
   const { lat, lon } = req.query;
   if (!lat || !lon) {
@@ -63,7 +63,13 @@ app.get("/reverse", async (req, res) => {
 
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+      {
+        headers: {
+          // Required by Nominatim to avoid 403
+          "User-Agent": "FamilyDashboard/1.0 (jwlerch@gmail.com)"
+        }
+      }
     );
 
     if (!response.ok) {
