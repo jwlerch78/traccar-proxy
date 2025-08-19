@@ -11,6 +11,7 @@ const TRACCAR_URL =
 const TRACCAR_USERNAME = process.env.TRACCAR_USERNAME || "jwlerch@gmail.com";
 const TRACCAR_PASSWORD = process.env.TRACCAR_PASSWORD || "Rileydog80!";
 const PORT = process.env.PORT || 3000;
+const LOCATIONIQ_KEY = process.env.LOCATIONIQ_KEY; // 👈 add this in Render dashboard
 
 // ===== CORS =====
 app.use((req, res, next) => {
@@ -54,32 +55,36 @@ app.get("/positions/:deviceId", async (req, res) => {
   }
 });
 
-// ===== Reverse geocoding endpoint (fixed User-Agent) =====
+// ===== Reverse geocoding endpoint (LocationIQ) =====
 app.get("/reverse", async (req, res) => {
   const { lat, lon } = req.query;
   if (!lat || !lon) {
     return res.status(400).json({ error: "Missing lat or lon query parameter" });
   }
 
+  if (!LOCATIONIQ_KEY) {
+    return res
+      .status(500)
+      .json({ error: "LOCATIONIQ_KEY not set in environment variables" });
+  }
+
   try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
-      {
-        headers: {
-          // Required by Nominatim to avoid 403
-          "User-Agent": "FamilyDashboard/1.0 (jwlerch@gmail.com)"
-        }
-      }
-    );
+    const url = `https://us1.locationiq.com/v1/reverse?key=${LOCATIONIQ_KEY}&lat=${lat}&lon=${lon}&format=json`;
+
+    const response = await fetch(url);
 
     if (!response.ok) {
       return res
         .status(response.status)
-        .json({ error: `Nominatim returned status ${response.status}` });
+        .json({ error: `LocationIQ returned status ${response.status}` });
     }
 
     const data = await response.json();
-    res.json(data);
+    // Normalize output so your frontend doesn’t need changes
+    res.json({
+      display_name: data.display_name || "Unknown location",
+      ...data,
+    });
   } catch (err) {
     console.error("Error reverse geocoding:", err);
     res.status(500).json({ error: "Error reverse geocoding coordinates" });
