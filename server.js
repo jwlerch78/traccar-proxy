@@ -28,30 +28,29 @@ app.use((req, res, next) => {
 app.options("/positions/:deviceId", (req, res) => res.sendStatus(200));
 app.options("/reverse", (req, res) => res.sendStatus(200));
 
-// ===== Proxy endpoint for Traccar positions =====
 app.get("/positions/:deviceId", async (req, res) => {
   const deviceId = req.params.deviceId;
+  const limit = req.query.limit || 1; // default to 1 if not provided
 
   try {
-    const auth = Buffer.from(`${TRACCAR_USERNAME}:${TRACCAR_PASSWORD}`).toString(
-      "base64"
-    );
+    const auth = Buffer.from(
+      `${TRACCAR_USERNAME}:${TRACCAR_PASSWORD}`
+    ).toString("base64");
 
-    const response = await fetch(`${TRACCAR_URL}${deviceId}`, {
+    const url = `${TRACCAR_URL}${deviceId}&limit=${limit}`;
+    const response = await fetch(url, {
       headers: { Authorization: `Basic ${auth}` },
     });
 
     if (!response.ok) {
-      return res
-        .status(response.status)
-        .json({ error: `Traccar returned status ${response.status}` });
+      throw new Error(`Traccar responded with ${response.status}`);
     }
 
     const data = await response.json();
     res.json(data);
   } catch (err) {
-    console.error("Error fetching from Traccar:", err);
-    res.status(500).json({ error: "Error fetching device location" });
+    console.error("Error fetching positions:", err.message);
+    res.status(500).json({ error: "Failed to fetch positions" });
   }
 });
 
